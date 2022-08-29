@@ -1,0 +1,88 @@
+This is a set of handy tools for preparing the backup on dvd/blu-ray disks.
+
+1. atomize.sh  <- this tool finds files that are larger than specified size (by
+default 512MB) and splits them into chunks. This is done to reach better
+utilization of space on DVD/BD disks (ie. when file size is too big it might
+not fit into a disk and empty space would be left). Run this tool especially if
+there are many big files going to be recorder on the disk. 
+
+2. split2Volumes.sh <- this one finds all files that are to be recorded on the
+disk and creates *.list file for each volume. The maximum volume size can be
+configured (to match e.g. either CD, DVD or BD capacity).  This *.list files
+can be used with mkisofs to create *.iso images, eg:
+   
+mkisofs -o <vol-1.iso> -D -r -joliet-long -graft-points -path-list ./vol-1.list
+
+3. unatomize.sh <- this script undoes the changes made by atomize.sh, i.e.  it
+merges the files that were spli. Use this script after restoring data from
+DVD/BD backup, so that the large files will return to their original form.
+
+
+Usage or the tools.
+===================
+
+A. When there are only small files in the directory that is going to be backed
+up (e.g. backing up images or mp3s) then use only split2Volumes.sh:
+   
+split2Volumes.sh <directory-for-backup> [<relative-directory-name>]
+
+parameters: 
+
+   directory-for-backup  - mandatory, specifies the directory to be backed up 
+
+   relative-directory-name 	- optional, specifies the directory that should be
+used as "root" in the resulting ISO filesystem.  By default it has the same
+value as "directory-for-backup".
+  
+Example usages
+--------------
+
+Assume there are files to be backed up: 
+/mnt
+    /samba
+        /archive
+            /backup_20211125
+                /file01.tgz
+                /file02.tgz
+
+Using the following:
+
+split2Volumes.sh /mnt/samba/archive/backup_20211125 /mnt/samba/archive
+
+-> will create the list of files from "backup_20211125" and in the resulting
+ISO, files will be under directory "/backup_20211125":
+
+/backup_20211125
+    /file01.tgz
+    /file02.tgz
+	
+
+split2Volumes.sh /mnt/samba/archive/backup_20211125
+
+-> will create the list of files from "backup_20211125" and in the resulting
+ISO, the path will start from "/":
+
+/file01.tgz
+/file02.tgz
+
+Next, use mkisofs to generate *.iso files based on *.list files.
+  
+
+B. When there are some big files in the firectory (i.e. videos or some large
+zip archives):
+   
+   ==> atomize files first.
+   
+In order to do that, copy the files that are to be backed up into a temporary
+directory (don't work on original copy, as atomize.sh will cut the files into
+pieces). Use the atomize.sh so that the DVD/BD media will be better utilized:
+   
+atomize.sh <directory-for-backup>
+
+   ==> use split2Volumes.sh (as specified in point A)
+
+If there is a need to restore the backup files:
+
+- copy all DVD/BD into the HDD.
+- run "unatomize.sh" tool which will merge the files that were "atomized".
+
