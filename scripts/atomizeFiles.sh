@@ -10,7 +10,7 @@ if [ ! -d "$1" ]; then
     exit 0
 fi
 
-MAX_FILE_SIZE_MB=512
+MAX_FILE_SIZE_MB=256
 
 RANDOM_NUMBER=`date +%N`
 TMP_FILE="list${RANDOM_NUMBER}.txt"
@@ -27,6 +27,7 @@ while read FILENAME; do
     CNT=$(($CNT+1))
     echo "Atomizing file# ${CNT}: ${FILENAME}"
     split -b ${MAX_FILE_SIZE_MB}M "$FILENAME" "${FILENAME}-part_"
+    date -R -r "${FILENAME}" > "${FILENAME}-moddate"
     rm "$FILENAME"
 done < ${TMP_FILE}
 

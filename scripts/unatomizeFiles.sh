@@ -29,6 +29,9 @@ while read FILENAME; do
     echo "Unatomizing file# ${CNT}: ${ORIGINAL_FILENAME}"
     cat "${ORIGINAL_FILENAME}"-part_?? > "${ORIGINAL_FILENAME}"
     rm "${ORIGINAL_FILENAME}"-part_??
+    MODDATE=`cat "${ORIGINAL_FILENAME}-moddate"`
+    rm "${ORIGINAL_FILENAME}-moddate"
+    touch -d "${MODDATE}" "${ORIGINAL_FILENAME}"
 done < $TMP_FILENAME
 
 echo -e "\n Finished."
