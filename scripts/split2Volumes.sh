@@ -6,19 +6,19 @@ REL_BASE_DIR="undef"
 BDR=24900000000
 DVD=4690000000
 CD=690000000
-MAX_VOL_SIZE=$BDR
+VOL_SIZE=$BDR
 
 while getopts r:s: name; do
     case $name in
     r)  REL_BASE_DIR="$OPTARG" ;;
     s)  if [ "$OPTARG" == "cd" ] ; then 
-            MAX_VOL_SIZE=$CD 
+            VOL_SIZE=$CD
         elif [ "$OPTARG" == "dvd" ] ; then 
-            MAX_VOL_SIZE=$DVD
+            VOL_SIZE=$DVD
         elif [ "$OPTARG" == "bdr" ] ; then
-            MAX_VOL_SIZE=$BDR
+            VOL_SIZE=$BDR
         else 
-            SIZE="$OPTARG" 
+            VOL_SIZE="$OPTARG"
         fi ;;
     ?)  printf "Usage: splitToVolumes.sh [-r <base-relative-directory>] [-s <size>] directories-to-split* \n   Note: pre-defined contants 'cd', 'dvd' and 'bdr' can be used for size."
     esac
@@ -26,11 +26,11 @@ done
 
 MIN_SIZE=10000000
 
-if [ "$MAX_VOL_SIZE" -lt "$MIN_SIZE" ] ; then
+if [ "$VOL_SIZE" -lt "$MIN_SIZE" ] ; then
     echo "ERROR: size cannot be smaller than $MIN_SIZE"
     exit 0
 else
-    echo "Info: size of volume set to $MAX_VOL_SIZE"
+    echo "Info: size of volume set to $VOL_SIZE"
 fi
 
 if [ -d "$REL_BASE_DIR" ]; then
@@ -86,12 +86,12 @@ while read FILENAME; do
     
     FILE_SIZE=`stat -c%s "$FILENAME"`
     
-    if [ $FILE_SIZE -gt $MAX_VOL_SIZE ]
+    if [ $FILE_SIZE -gt $VOL_SIZE ]
     then
         echo "\nError: File $FILENAME is larger than max volume size, skipping"
     else
         POTENTIAL_NEW_VOL_SIZE=$(($CURR_VOL_SIZE + $FILE_SIZE))
-        if [ $POTENTIAL_NEW_VOL_SIZE -gt $MAX_VOL_SIZE ]
+        if [ $POTENTIAL_NEW_VOL_SIZE -gt $VOL_SIZE ]
         then
              CURR_VOL_NR=$(($CURR_VOL_NR + 1))
              CURR_VOL_SIZE=$FILE_SIZE
