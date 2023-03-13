@@ -1,6 +1,6 @@
-#/bin/bash
+#!/bin/bash
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
     echo "provide the directory to atomize!"
     exit 0
 fi

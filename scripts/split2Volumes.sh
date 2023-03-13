@@ -1,35 +1,74 @@
-#/bin/bash
+#!/bin/bash
 
-if [ "$#" < 1 ]; then
-    echo "provide the directory to split!"
+
+REL_BASE_DIR="undef"
+
+BDR=24900000000
+DVD=4690000000
+CD=690000000
+MAX_VOL_SIZE=$BDR
+
+while getopts r:s: name; do
+    case $name in
+    r)  REL_BASE_DIR="$OPTARG" ;;
+    s)  if [ "$OPTARG" == "cd" ] ; then 
+            MAX_VOL_SIZE=$CD 
+        elif [ "$OPTARG" == "dvd" ] ; then 
+            MAX_VOL_SIZE=$DVD
+        elif [ "$OPTARG" == "bdr" ] ; then
+            MAX_VOL_SIZE=$BDR
+        else 
+            SIZE="$OPTARG" 
+        fi ;;
+    ?)  printf "Usage: splitToVolumes.sh [-r <base-relative-directory>] [-s <size>] directories-to-split* \n   Note: pre-defined contants 'cd', 'dvd' and 'bdr' can be used for size."
+    esac
+done
+
+MIN_SIZE=10000000
+
+if [ "$MAX_VOL_SIZE" -lt "$MIN_SIZE" ] ; then
+    echo "ERROR: size cannot be smaller than $MIN_SIZE"
+    exit 0
+else
+    echo "Info: size of volume set to $MAX_VOL_SIZE"
+fi
+
+if [ -d "$REL_BASE_DIR" ]; then
+     echo "Info: Using $REL_BASE_DIR as the base directory for the iso fs"
+elif [ "$REL_BASE_DIR" != "undef" ]; then
+    echo "ERROR: provided directory $REL_BASE_DIR does not exist"
     exit 0
 fi
 
-if [ ! -d "$1" ]; then
-    echo "Provided argument $1 is not valid directory"
+shift $(($OPTIND - 1))
+
+if [ "$#" -lt 1 ]; then
+    echo "ERROR: provide at least 1 directory to split!"
     exit 0
+fi
+
+if [ "$REL_BASE_DIR" == "undef" ]; then
+    REL_BASE_DIR=$1
 fi
 
 RANDOM_NUMBER=`date +%N`
 TMP_FILE="list${RANDOM_NUMBER}.txt"
-
-REL_BASE_DIR=$1
-
-if [ -d "$2" ]; then
-     REL_BASE_DIR=$2
-     echo "Using $2 as the base directory for the iso fs"
-fi
-
-# BD-R MAX_VOL_SIZE=24900000000
-# DVD. MAX_VOL_SIZE=4690000000
-# CD.. MAX_VOL_SIZE=690000000
-# custom MAX_VOL_SIZE=100000000
-
-MAX_VOL_SIZE=24900000000
+touch $TMP_FILE
 
 echo "Step 1/2: Reading contents of directory..."
 
-find $1 -type f | sort > $TMP_FILE
+
+for a_dir in "$@"
+do
+    if [ ! -d "${a_dir}" ]; then
+        echo "Provided argument ${a_dir} is not valid directory"
+        rm $TMP_FILE
+        exit 0
+    fi
+    echo "Info: adding files from ${a_dir}..."
+    find $a_dir -type f | sort >> $TMP_FILE
+done
+
 TOTAL_FILES=`cat ${TMP_FILE} | wc -l`
 
 echo "Step 2/2: Splitting $TOTAL_FILES into volumes..."
