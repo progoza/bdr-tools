@@ -3,6 +3,11 @@
 
 REL_BASE_DIR="undef"
 
+CONF_DIR=~/.local/share/bdr-tools
+CONF_FILE_CNT=$CONF_DIR/vol_cnt.txt
+
+mkdir -p $CONF_DIR
+
 BDR=24900000000
 DVD=4690000000
 CD=690000000
@@ -34,6 +39,7 @@ else
 fi
 
 if [ -d "$REL_BASE_DIR" ]; then
+     REL_BASE_DIR=`realpath $REL_BASE_DIR`/
      echo "Info: Using $REL_BASE_DIR as the base directory for the iso fs"
 elif [ "$REL_BASE_DIR" != "undef" ]; then
     echo "ERROR: provided directory $REL_BASE_DIR does not exist"
@@ -51,8 +57,7 @@ if [ "$REL_BASE_DIR" == "undef" ]; then
     REL_BASE_DIR=$1
 fi
 
-RANDOM_NUMBER=`date +%N`
-TMP_FILE="list${RANDOM_NUMBER}.txt"
+TMP_FILE=`mktemp`
 touch $TMP_FILE
 
 echo "Step 1/2: Reading contents of directory..."
@@ -71,12 +76,16 @@ done
 
 TOTAL_FILES=`cat ${TMP_FILE} | wc -l`
 
-echo "Step 2/2: Splitting $TOTAL_FILES into volumes..."
+echo "Step 2/2: Splitting $TOTAL_FILES files into volumes..."
 
-rm -rf ./volume_*.list
-        
 CURR_VOL_SIZE=0
-CURR_VOL_NR=1001
+CURR_VOL_NR=1000
+if [ -f $CONF_FILE_CNT ] ; then
+  CURR_VOL_NR=`cat $CONF_FILE_CNT`
+fi
+CURR_VOL_NR=$(($CURR_VOL_NR + 1))
+echo $CURR_VOL_NR > $CONF_FILE_CNT
+
 CNT=0
 PROGRESS_REFRESH=3
 CURR_TIME=$((`date +%s`/$PROGRESS_REFRESH))
@@ -84,7 +93,7 @@ START_TIME=`date +%s`
 
 while read FILENAME; do
     
-    FILE_SIZE=`stat -c%s "$FILENAME"`
+    FILE_SIZE=`stat -f%z "$FILENAME"`
     
     if [ $FILE_SIZE -gt $VOL_SIZE ]
     then
@@ -95,16 +104,17 @@ while read FILENAME; do
         then
              CURR_VOL_NR=$(($CURR_VOL_NR + 1))
              CURR_VOL_SIZE=$FILE_SIZE
+             echo $CURR_VOL_NR > $CONF_FILE_CNT
         else
              CURR_VOL_SIZE=$POTENTIAL_NEW_VOL_SIZE
         fi;
-        REAL_PATH=`realpath --relative-base=$REL_BASE_DIR "$FILENAME"`
         ABS_PATH=`realpath "$FILENAME"`
-        echo "/${REAL_PATH}=${ABS_PATH}" >> volume_$CURR_VOL_NR.list
+        REL_PATH=`echo $ABS_PATH | sed -e "s|^$REL_BASE_DIR||"`
+        echo "${REL_PATH}=${ABS_PATH}" >> volume_$CURR_VOL_NR.list
     fi
     
     CNT=$(($CNT+1))
-    
+
     NEW_TIME=$((`date +%s`/$PROGRESS_REFRESH))
     if [ $CURR_TIME -ne $NEW_TIME ] 
     then

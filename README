@@ -24,7 +24,7 @@ Usage or the tools.
 A. When there are only small files in the directory that is going to be backed
 up (e.g. backing up images or mp3s) then use only split2Volumes.sh:
    
-split2Volumes.sh <directory-for-backup> [<relative-directory-name>]
+split2Volumes.sh [-r <relative-directory-name>] [-s cd/dvd/bdr] <directory-for-backup>
 
 parameters: 
 
@@ -33,6 +33,9 @@ parameters:
    relative-directory-name 	- optional, specifies the directory that should be
 used as "root" in the resulting ISO filesystem.  By default it has the same
 value as "directory-for-backup".
+
+   size - optional, max size of resulting iso file (def is bdr, can be set to 
+"cd", "dvd", "bdr" or number of bytes.
   
 Example usages
 --------------
