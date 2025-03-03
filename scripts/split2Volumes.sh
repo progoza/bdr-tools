@@ -93,7 +93,7 @@ START_TIME=`date +%s`
 
 while read FILENAME; do
     
-    FILE_SIZE=`stat -f%z "$FILENAME"`
+    FILE_SIZE=`stat -c%s "$FILENAME"`
     
     if [ $FILE_SIZE -gt $VOL_SIZE ]
     then
@@ -110,7 +110,8 @@ while read FILENAME; do
         fi;
         ABS_PATH=`realpath "$FILENAME"`
         REL_PATH=`echo $ABS_PATH | sed -e "s|^$REL_BASE_DIR||"`
-        echo "${REL_PATH}=${ABS_PATH}" >> volume_$CURR_VOL_NR.list
+        REL_PATH_ESCAPED=`echo $REL_PATH | sed 's|\=|\\\=|g'`
+        echo "${REL_PATH_ESCAPED}=${ABS_PATH}" >> volume_$CURR_VOL_NR.list
     fi
     
     CNT=$(($CNT+1))
